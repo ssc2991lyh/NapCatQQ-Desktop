@@ -1,0 +1,31 @@
+# 解锁版构建：复用官方 build-msi.yml 的全部编译逻辑，仅改触发方式。
+# 目的：fork 本仓库并 push 后，自动在 GitHub 免费 Windows runner 上编译出解除
+#       MAX_BOTS 限制 (4 -> 64) 的 NapCatQQ-Desktop MSI 安装包，产物作为 artifact 提供下载。
+
+name: Build Unlocked MSI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      upload_artifact_name:
+        description: "MSI 制品名；为空时自动生成"
+        required: false
+        default: "napcatqq-desktop-unlocked"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: build-unlocked-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    # 直接复用官方 MSI 构建 job（含 pnpm/Rust/tauri:build:msi 全流程 + 上传 artifact）
+    uses: ./.github/workflows/build-msi.yml
+    with:
+      upload_artifact_name: ${{ inputs.upload_artifact_name || 'napcatqq-desktop-unlocked' }}
+    secrets: inherit

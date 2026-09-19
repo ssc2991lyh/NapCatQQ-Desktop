@@ -47,8 +47,8 @@ pub use runtime_gate::{RuntimeReadinessGate, describe_not_ready, framework_compo
 
 // ─── 常量 ──────────────────────────────────────────────────────────────────────
 
-/// Desktop 单机上限:最多同时托管 4 个 Bot
-const MAX_BOTS: usize = 4;
+/// Desktop 单机上限(已解除官方默认 4 限制,改 64;可按需继续调大)
+const MAX_BOTS: usize = 64;
 
 // ─── Error ─────────────────────────────────────────────────────────────────────
 

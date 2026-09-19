@@ -1025,11 +1025,11 @@ async fn bootstrap_auto_starts_marked_bots() {
 }
 
 #[tokio::test]
-async fn bootstrap_respects_4_bot_limit_and_reports_skipped() {
+async fn bootstrap_respects_bot_limit_and_reports_skipped() {
     let temp = ncd_test_support::TempWorkspace::new().unwrap();
     let (_, repo, _, manager) = make_manager(temp.path());
 
-    for i in 1..=6u64 {
+    for i in 1..=66u64 {
         repo.upsert(bot_config(10000 + i, &format!("bot-{i}")))
             .await
             .unwrap();
@@ -1037,13 +1037,13 @@ async fn bootstrap_respects_4_bot_limit_and_reports_skipped() {
 
     let result = manager.bootstrap().await.unwrap();
 
-    // 最多只注册 4 个 actor
-    assert_eq!(manager.bot_count().await, 4);
+    // 最多只注册 64 个 actor
+    assert_eq!(manager.bot_count().await, 64);
 
     // 超出的 2 个 bot 被记入 skipped
     assert_eq!(result.skipped.len(), 2);
-    assert_eq!(result.skipped[0], BotId::new("10005"));
-    assert_eq!(result.skipped[1], BotId::new("10006"));
+    assert_eq!(result.skipped[0], BotId::new("10065"));
+    assert_eq!(result.skipped[1], BotId::new("10066"));
 }
 
 // ─── 删除 ─────────────────────────────────────────────────────────────────────
