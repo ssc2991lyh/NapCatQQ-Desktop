@@ -711,26 +711,26 @@ async fn remote_reconcile_probes_other_bots_while_one_host_is_stalled() {
 }
 
 #[tokio::test]
-async fn upsert_enforces_4_bot_limit() {
+async fn upsert_enforces_bot_limit() {
     let temp = ncd_test_support::TempWorkspace::new().unwrap();
     let (_, _, _, manager) = make_manager(temp.path());
 
-    for i in 1..=4 {
+    for i in 1..=64 {
         manager
             .upsert_bot_config(bot_config(10000 + i, &format!("bot-{i}")))
             .await
             .unwrap();
     }
 
-    assert_eq!(manager.bot_count().await, 4);
+    assert_eq!(manager.bot_count().await, 64);
 
     let err = manager
-        .upsert_bot_config(bot_config(10005, "bot-5"))
+        .upsert_bot_config(bot_config(10065, "bot-65"))
         .await
         .unwrap_err();
 
     assert!(matches!(err, BotManagerError::BotLimitReached));
-    assert_eq!(manager.bot_count().await, 4);
+    assert_eq!(manager.bot_count().await, 64);
 }
 
 #[tokio::test]
@@ -1238,11 +1238,11 @@ async fn bootstrap_auto_starts_marked_bots() {
 }
 
 #[tokio::test]
-async fn bootstrap_respects_4_bot_limit_and_reports_skipped() {
+async fn bootstrap_respects_bot_limit_and_reports_skipped() {
     let temp = ncd_test_support::TempWorkspace::new().unwrap();
     let (_, repo, _, manager) = make_manager(temp.path());
 
-    for i in 1..=6u64 {
+    for i in 1..=66u64 {
         repo.upsert(bot_config(10000 + i, &format!("bot-{i}")))
             .await
             .unwrap();
@@ -1250,13 +1250,13 @@ async fn bootstrap_respects_4_bot_limit_and_reports_skipped() {
 
     let result = manager.bootstrap().await.unwrap();
 
-    // 最多只注册 4 个 actor
-    assert_eq!(manager.bot_count().await, 4);
+    // 最多只注册 64 个 actor
+    assert_eq!(manager.bot_count().await, 64);
 
     // 超出的 2 个 bot 被记入 skipped
     assert_eq!(result.skipped.len(), 2);
-    assert_eq!(result.skipped[0], BotId::new("10005"));
-    assert_eq!(result.skipped[1], BotId::new("10006"));
+    assert_eq!(result.skipped[0], BotId::new("10065"));
+    assert_eq!(result.skipped[1], BotId::new("10066"));
 }
 
 // ─── 删除 ─────────────────────────────────────────────────────────────────────
@@ -1986,25 +1986,25 @@ async fn bootstrap_skipped_bots_are_not_auto_started() {
     let temp = ncd_test_support::TempWorkspace::new().unwrap();
     let (_, repo, _, manager) = make_manager(temp.path());
 
-    // 前 4 个不自动启动,第 5 个标记 auto_start
-    for i in 1..=4u64 {
+    // 前 64 个不自动启动,第 65 个标记 auto_start
+    for i in 1..=64u64 {
         repo.upsert(bot_config(10000 + i, &format!("bot-{i}")))
             .await
             .unwrap();
     }
-    repo.upsert(bot_config_auto_start(10005, "auto-skipped"))
+    repo.upsert(bot_config_auto_start(10065, "auto-skipped"))
         .await
         .unwrap();
 
     let result = manager.bootstrap().await.unwrap();
 
-    // 第 5 个被跳过
+    // 第 65 个被跳过
     assert_eq!(result.skipped.len(), 1);
-    assert_eq!(result.skipped[0], BotId::new("10005"));
+    assert_eq!(result.skipped[0], BotId::new("10065"));
 
-    // 没有 bot 被自动启动(前 4 个不是 auto_start,第 5 个被 skip)
+    // 没有 bot 被自动启动(前 64 个不是 auto_start,第 65 个被 skip)
     assert_eq!(result.started.succeeded.len(), 0);
-    assert_eq!(manager.bot_count().await, 4);
+    assert_eq!(manager.bot_count().await, 64);
 }
 
 #[tokio::test]

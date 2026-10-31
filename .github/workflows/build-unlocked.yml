@@ -1,0 +1,25 @@
+# 解锁版专用:推送到 unlock-* 分支时自动构建 Windows MSI。
+# 复用官方 build-msi.yml(workflow_call),不重复定义构建逻辑。
+
+name: Build Unlocked MSI
+
+on:
+  push:
+    branches:
+      - "unlock-*"
+  workflow_dispatch:
+    inputs:
+      git_ref:
+        description: "构建所基于的 Git ref；为空时使用当前触发 ref"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    uses: ./.github/workflows/build-msi.yml
+    with:
+      git_ref: ${{ inputs.git_ref || github.ref }}

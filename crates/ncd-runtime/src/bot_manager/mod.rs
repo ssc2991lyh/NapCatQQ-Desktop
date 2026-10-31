@@ -61,8 +61,8 @@ pub use runtime_gate::{RuntimeReadinessGate, describe_not_ready, framework_compo
 
 // ─── 常量 ──────────────────────────────────────────────────────────────────────
 
-/// Desktop 单机上限:最多同时托管 4 个 Bot
-const MAX_BOTS: usize = 4;
+/// Desktop 单机上限:最多同时托管 64 个 Bot
+const MAX_BOTS: usize = 64;
 
 // ─── Error ─────────────────────────────────────────────────────────────────────
 
@@ -847,7 +847,7 @@ impl<R: BotConfigRepo + 'static, S: ConfigStore + 'static> BotManager<R, S> {
     }
 
     /// 启动时从持久化配置恢复所有 Bot Actor,并自动启动标记了 auto_start 的 Bot
-    /// 返回 BootstrapResult,其中 skipped 包含超出 4 开上限而未注册的 Bot ID
+    /// 返回 BootstrapResult,其中 skipped 包含超出单机上限而未注册的 Bot ID
     pub async fn bootstrap(&self) -> Result<BootstrapResult, BotManagerError> {
         self.bootstrap_with_auto_start(true).await
     }
@@ -915,7 +915,7 @@ impl<R: BotConfigRepo + 'static, S: ConfigStore + 'static> BotManager<R, S> {
             warn!(
                 target: "ncd_runtime::bot_manager",
                 skipped = skipped.len(),
-                "部分 Bot 超过单机 4 开上限，未注册 Actor"
+                "部分 Bot 超过单机上限，未注册 Actor"
             );
         }
         info!(
@@ -1171,7 +1171,7 @@ impl<R: BotConfigRepo + 'static, S: ConfigStore + 'static> BotManager<R, S> {
     /// - 如果 bot.json 写入失败,派生文件不会被写入,状态完全未变
     /// - 如果派生文件写入失败,bot.json 已是最新,派生文件可在下次启动时重新生成
     ///   不会造成不可恢复的不一致
-    /// - 新增时:检查 4 开上限,持久化,写派生文件,创建 Actor
+    /// - 新增时:检查单机上限,持久化,写派生文件,创建 Actor
     /// - 更新时:持久化,写派生文件,热推送(通过 restart 通知 Actor 重新加载)
     /// - 如果 backend_type 发生切换(NapCat <-> SnowLuma),必须用旧 backend
     ///   停掉运行中的进程,再用新 backend 启动,避免老进程留尸
